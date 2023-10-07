@@ -11,7 +11,7 @@ Servo servo2;
 unsigned char val=EEPROM[1000];
 unsigned char lock_status=EEPROM[600];
 static unsigned char copy_password[34];
-static int i=0;
+static int i=0; // indexing for the password entered
 bool lock_bit=1;
 #define c1 5
 #define c2 6
@@ -67,6 +67,7 @@ col1=digitalRead(c1);
 col2=digitalRead(c2);
 col3=digitalRead(c3);
 //FOR STORING THE DEFAULT PASSWORD IN EEPROM DURING FIRST TIME BOOT WHEN DEFAULT VALUES OF EEPROM IS 255
+	//Excute only one time
 if(val==255){// when we are turing on first time
   EEPROM.put(1000,0); //update the value so next time it wont enter
   static unsigned char password[34]="1111";
@@ -83,7 +84,7 @@ if(val==255){// when we are turing on first time
   
   }
 //-----------------------------------------------------------------------------------------------------
-	
+	//Excute only one time
 if(lock_status==255){//when we turn on first time
   lcd.print("  __LOCKED__ ");
   EEPROM.put(600,0); // update the value so next time it wont enter
@@ -99,7 +100,7 @@ if(lock_status==255){//when we turn on first time
 //-----------------------------------------------------------------------------------------------------
 //lock_bit is used to enter into this if condition only once 
 //because we are running in void loop function which will excute continously
-// Door is in locked state and power is off	
+// Door is in locked state and power off to on state	
 if(EEPROM[600]==0 && lock_bit){// when we turn on second time(power off and on time) in hardware time
        lcd.print("  __LOCKED__ ");
          read_status= digitalRead(erase);
@@ -107,11 +108,11 @@ if(EEPROM[600]==0 && lock_bit){// when we turn on second time(power off and on t
    read_status= digitalRead(erase);
   }
   lcd.clear();
-  lock_bit=0;
+  lock_bit=0; // update the value so next time it wont enter
 }
 //----------------------------------------------------------------------------------------------------	
 //WHEN THE ENTERED PASSWORD IS CORRECT AND WHEN THE DOOR IS IN OPEN STATE DURING THE POWER OFF TIME
-if(EEPROM[600]==1){
+if(EEPROM[600]==1){ // this value is updated by password_correct() function
      if(EEPROM[600]==1) { //door opened status
             servo1.write(90);
             delay(1000);// need to add in real hardware implementation
@@ -131,11 +132,13 @@ if(EEPROM[600]==1){
           
      }
 }
+//-----------------------------------------------------------------------------------------------------	
 //WHEN WE WANT TO CHANGE THE PASSWORD
   read_status=digitalRead(reset_password);
   if(read_status==0){
         change_password();
   }
+//-----------------------------------------------------------------------------------------------------	
 //WHEN WE PRESS THE ENTER BUTTON
 read_status=digitalRead(enter);
     if(read_status==0){
@@ -157,7 +160,7 @@ read_status=digitalRead(enter);
     read_status=digitalRead(erase);
     if(read_status==0){
       lcd.clear();
-      i=0;
+      i=0; //reset the index
     }
 //----------------------------------------------------------------------------------------------------	
 	// PASSWORD ENTERING MECHANISM
@@ -188,7 +191,7 @@ if(x==0)
 
    {    copy_password[i]=a;
         i++;
-        a=a-'0'; 
+        a=a-'0'; // for converting Ascii value to its original value
       lcd.print(a);
       
        
@@ -254,7 +257,7 @@ void password_correct(void){
           lcd.print("     ACCESS  ");
            lcd.setCursor(0,1);
           lcd.print("  ***GRANTED*** ");
-          EEPROM[600]=1;
+          EEPROM[600]=1; // update the eeprom value for password correct
           delay(1000);
           
          
@@ -302,7 +305,9 @@ void change_password(void){
   lcd.setCursor(0,1);
   
   read_status=digitalRead(reset_password);
+	//*********************PASSWORD RESETTING MODE**********************//
   while(read_status==1){
+	  
     
    digitalWrite(r3,LOW);
 digitalWrite(r2,LOW);
@@ -318,7 +323,7 @@ if(col1==0)
     col_check(col3,c3,'3','6','9');
     //AFTER ENTERING THE PASSWORD
           read_status=digitalRead(enter);
-          if(read_status==0){
+          if(read_status==0){ // WHEN WE PRESS ENTER BUTTON
              copy_password[i]='\0';
   unsigned char a = password_check(copy_password); //check the password
                   if(a==1){
@@ -327,14 +332,12 @@ if(col1==0)
                   }
                   else if(a==2){
                     password_not_entered();
-                    read_status=digitalRead(erase);//checking for erase pin
-  while(read_status==1){
-     read_status=digitalRead(erase);
-  }
+                
   lcd.clear();
   lcd.print("ENTER OLD PASS:");
   lcd.setCursor(0,1);
   i=0;
+			  
                   }
                   else if(a==0){
                     lcd.clear();
@@ -349,10 +352,17 @@ if(col1==0)
     lcd.setCursor(0,1);
     i=0;
                   }
+		  
           }
 
     read_status=digitalRead(reset_password);
+
+
+	  
   }
+	//*********************PASSWORD RESETTING MODE END**********************//
+
+	
   lcd.clear();
   lcd.print("EXIT FROM");
   lcd.setCursor(0,1);
