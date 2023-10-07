@@ -36,7 +36,7 @@ void password_incorrect(void);
 void password_not_entered(void);
 
 LiquidCrystal lcd(13,12,A2,A3,A4,A5);
-//******************************************************************************
+//***********************************************SETUP_FUNCTION_START***********************************************************//
 void setup() {
   servo1.attach(entrance_servo);
   servo2.attach(main_gate_servo);
@@ -53,8 +53,9 @@ void setup() {
     pinMode(r2,OUTPUT);
     pinMode(r1,OUTPUT);
 }
-//**********************************************************************************
-//MAIN_PROGRAM//
+//***********************************************SETUP_FUNCTION_END***********************************************************//
+
+//***********************************************MAIN_PROGRAM_START***********************************************************//
 void loop() {
   servo1.write(0);
   //delay(1000);// need to add in real hardware implementation
@@ -65,9 +66,9 @@ digitalWrite(r1,LOW);
 col1=digitalRead(c1);
 col2=digitalRead(c2);
 col3=digitalRead(c3);
-//FOR STORING THE DEFAULT PASSWORD IN EEPROM DURING FIRST TIME BOOT
+//FOR STORING THE DEFAULT PASSWORD IN EEPROM DURING FIRST TIME BOOT WHEN DEFAULT VALUES OF EEPROM IS 255
 if(val==255){// when we are turing on first time
-  EEPROM.put(1000,0);
+  EEPROM.put(1000,0); //update the value so next time it wont enter
   static unsigned char password[34]="1111";
   static unsigned char* copy=password;
    int i=0;
@@ -81,9 +82,11 @@ if(val==255){// when we are turing on first time
   val=EEPROM.get(1000,val); // update the value so next time it wont enter
   
   }
+//-----------------------------------------------------------------------------------------------------
+	
 if(lock_status==255){//when we turn on first time
   lcd.print("  __LOCKED__ ");
-  EEPROM.put(600,0);
+  EEPROM.put(600,0); // update the value so next time it wont enter
   lock_status=EEPROM.get(600,lock_status);
   read_status= digitalRead(erase);
   // STUCK IN LOOP UNTIL WE PRESS THE ERASE BUTTON
@@ -92,8 +95,11 @@ if(lock_status==255){//when we turn on first time
   }
   lcd.clear();
 }
+	
+//-----------------------------------------------------------------------------------------------------
 //lock_bit is used to enter into this if condition only once 
 //because we are running in void loop function which will excute continously
+// Door is in locked state and power is off	
 if(EEPROM[600]==0 && lock_bit){// when we turn on second time(power off and on time) in hardware time
        lcd.print("  __LOCKED__ ");
          read_status= digitalRead(erase);
@@ -103,7 +109,8 @@ if(EEPROM[600]==0 && lock_bit){// when we turn on second time(power off and on t
   lcd.clear();
   lock_bit=0;
 }
-//WHEN THE ENTERED PASSWORD IS CORRECT
+//----------------------------------------------------------------------------------------------------	
+//WHEN THE ENTERED PASSWORD IS CORRECT AND WHEN THE DOOR IS IN OPEN STATE DURING THE POWER OFF TIME
 if(EEPROM[600]==1){
      if(EEPROM[600]==1) { //door opened status
             servo1.write(90);
@@ -145,11 +152,15 @@ read_status=digitalRead(enter);
         }
 
     }
+//----------------------------------------------------------------------------------------------------	
+   //WHEN WE WANT TO SUDDENLY ERASE THE ENTERED PASSWORD	
     read_status=digitalRead(erase);
     if(read_status==0){
       lcd.clear();
       i=0;
     }
+//----------------------------------------------------------------------------------------------------	
+	// PASSWORD ENTERING MECHANISM
 if(col1==0)
     col_check(col1,c1,'1','4','7');
     else if(col2==0)
@@ -162,7 +173,11 @@ if(col1==0)
       i=0;
     }
 }
-//************************************************************************************
+//***********************************************MAIN_PROGRAM_END***********************************************************//
+
+
+
+//**********************************************FUNCTIONS_DEFINATIONS**********************************************************//
 void col_check(bool x,unsigned char y,unsigned char a,unsigned char b,unsigned char c){
 digitalWrite(r3,HIGH);
 digitalWrite(r2,HIGH);
